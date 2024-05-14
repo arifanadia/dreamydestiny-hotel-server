@@ -8,7 +8,7 @@ const port = process.env.PORT || 5000;
 
 
 // middleware
-app.use(express());
+
 app.use(cors({
     origin: [
         "http://localhost:5173",
@@ -17,7 +17,7 @@ app.use(cors({
     ],
     credentials: true,
 }));
-
+app.use(express.json());
 
 // cookie option
 const cookieOptions = {
@@ -45,7 +45,10 @@ async function run() {
         // Connect the client to the server	(optional starting in v4.7)
         // await client.connect();
 
-        const dreamyDestinyRoomsCollection = client.db('dreamyDestinyDB').collection('Rooms')
+        const roomsCollection = client.db('dreamyDestinyDB').collection('Rooms');
+        const bookingCollection = client.db('dreamyDestinyDB').collection('bookings');
+
+
         //creating Token
         app.post("/jwt", async (req, res) => {
             const user = req.body;
@@ -64,16 +67,27 @@ async function run() {
                 .send({ success: true });
         });
 
-        app.get('/rooms', async(req,res) => {
-            const cursor = dreamyDestinyRoomsCollection.find();
+
+        // rooms collection API
+        app.get('/rooms', async (req, res) => {
+            const cursor = roomsCollection.find();
             const result = await cursor.toArray();
             res.send(result)
-            
+
         });
-        app.get('/room-details/:id', async(req,res)=> {
+        app.get('/room-details/:id', async (req, res) => {
             const id = req.params.id;
-            const query = {_id : new ObjectId(id)}
-            const result = await dreamyDestinyRoomsCollection.findOne(query);
+            const query = { _id: new ObjectId(id) }
+            const result = await roomsCollection.findOne(query);
+            res.send(result)
+        });
+
+        // booking Collection API
+
+        app.post('/bookings', async(req,res) => {
+            const booking = req.body;
+            console.log(booking);
+            const result = await bookingCollection.insertOne(booking);
             res.send(result)
         })
 
