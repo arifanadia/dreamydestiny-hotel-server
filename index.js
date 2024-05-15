@@ -83,6 +83,12 @@ async function run() {
         });
 
         // booking Collection API
+        app.get('/bookings', async (req, res) => {
+            const cursor = bookingCollection.find();
+            const result = await cursor.toArray();
+            res.send(result)
+
+        });
 
         app.post('/bookings', async (req, res) => {
             const booking = req.body;
@@ -95,6 +101,19 @@ async function run() {
             const query = { email: email }
             const result = await bookingCollection.find(query).toArray();
             res.send(result)
+        });
+        app.patch('/bookings/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const updateDoc = {
+                $set: {
+                    checkInDate: req.body.checkInDate,
+                    checkOutDate: req.body.checkOutDate
+                }
+            };
+            const result = await bookingCollection.updateOne(query, updateDoc);
+            res.send(result)
+
         })
 
 
