@@ -1,6 +1,8 @@
 const express = require('express');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
 require('dotenv').config()
 const app = express();
 const port = process.env.PORT || 5000;
@@ -12,12 +14,32 @@ const port = process.env.PORT || 5000;
 app.use(cors({
     origin: [
         "http://localhost:5173",
-        "https://cardoctor-bd.web.app",
-        "https://cardoctor-bd.firebaseapp.com",
+        "https://dreamydestiny-hotel.web.app",
+        "https://dreamydestiny-hotel.firebaseapp.com/",
     ],
     credentials: true,
 }));
 app.use(express.json());
+app.use(cookieParser());
+
+// custom middleware
+
+const verifyToken = async (req, res, next) => {
+    const token = req.cookies?.token;
+    console.log('value of the  middleware :', token);
+    if (!token) {
+        return res.status(401).send({ message: "not authorized" })
+    }
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+        if (err) {
+            return res.status(401).send({ message: "not authorized" })
+        }
+        console.log('value in the  token', decoded);
+        req.user = decoded
+        next()
+    })
+
+}
 
 // cookie option
 const cookieOptions = {
@@ -39,6 +61,7 @@ const client = new MongoClient(uri, {
         deprecationErrors: true,
     }
 });
+
 
 async function run() {
     try {
@@ -68,13 +91,30 @@ async function run() {
         });
 
 
-        // rooms collection API
-        app.get('/rooms', async (req, res) => {
+        // // rooms collection API
+        app.get('/featured-rooms', async (req, res) => {
+
+
             const cursor = roomsCollection.find();
             const result = await cursor.toArray();
             res.send(result)
 
         });
+
+        app.get('/rooms', async (req, res) => {
+            const { minPrice, maxPrice } = req.query;
+            console.log(req.query);
+            const cursor = roomsCollection.find({
+                price_per_night: {
+                    $gte: parseInt(minPrice),
+                    $lte: parseInt(maxPrice)
+                }
+            });
+            const result = await cursor.toArray();
+            console.log(result);
+            res.json(result);
+        });
+
         app.get('/room-details/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
@@ -96,12 +136,14 @@ async function run() {
             const result = await bookingCollection.insertOne(booking);
             res.send(result)
         })
+        // get my booking data by email
         app.get("/my-bookings/:email", async (req, res) => {
             const email = req.params.email
             const query = { email: email }
             const result = await bookingCollection.find(query).toArray();
             res.send(result)
         });
+        // update date
         app.patch('/bookings/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
@@ -114,7 +156,17 @@ async function run() {
             const result = await bookingCollection.updateOne(query, updateDoc);
             res.send(result)
 
-        })
+        });
+        // cancel booking
+        app.delete('/bookings/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const result = await bookingCollection.deleteOne(query);
+            res.send(result)
+        });
+
+
+
 
 
 
