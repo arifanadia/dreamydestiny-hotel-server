@@ -71,6 +71,7 @@ async function run() {
         const roomsCollection = client.db('dreamyDestinyDB').collection('Rooms');
         const bookingCollection = client.db('dreamyDestinyDB').collection('bookings');
         const reviewCollection = client.db('dreamyDestinyDB').collection('reviews');
+        const userCollection = client.db('dreamyDestinyDB').collection('users');
 
 
         //creating Token
@@ -168,13 +169,34 @@ async function run() {
             const result = await bookingCollection.deleteOne(query);
             res.send(result)
         });
+        app.get('/reviews', async(req,res)=> {
+            const cursor = reviewCollection.find();
+            const result = await cursor.toArray();
+            res.send(result)
+        })
 
         app.post('/reviews', async(req,res)=> {
             const review = req.body;
             console.log(review);
             const result = await reviewCollection.insertOne(review);
             res.send(result)
-        })
+        });
+
+        // user data
+
+        app.get('/users', async (req, res) => {
+            const cursor = userCollection.find();
+            console.log(cursor);
+            const result = await cursor.toArray();
+            res.send(result)
+          });
+      
+          app.post('/users', async (req, res) => {
+            const user = req.body;
+            console.log(user);
+            const result = await userCollection.insertOne(user);
+            res.send(result)
+          });
 
 
 
