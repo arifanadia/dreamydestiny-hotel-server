@@ -70,6 +70,7 @@ async function run() {
 
         const roomsCollection = client.db('dreamyDestinyDB').collection('Rooms');
         const bookingCollection = client.db('dreamyDestinyDB').collection('bookings');
+        const reviewCollection = client.db('dreamyDestinyDB').collection('reviews');
 
 
         //creating Token
@@ -115,12 +116,15 @@ async function run() {
             res.json(result);
         });
 
+
+
         app.get('/room-details/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
             const result = await roomsCollection.findOne(query);
             res.send(result)
         });
+
 
         // booking Collection API
         app.get('/bookings', async (req, res) => {
@@ -164,6 +168,13 @@ async function run() {
             const result = await bookingCollection.deleteOne(query);
             res.send(result)
         });
+
+        app.post('/reviews', async(req,res)=> {
+            const review = req.body;
+            console.log(review);
+            const result = await reviewCollection.insertOne(review);
+            res.send(result)
+        })
 
 
 
